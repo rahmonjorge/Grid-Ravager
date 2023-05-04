@@ -16,13 +16,15 @@ class Network:
     def connect(self):
         try:
             self.skt.connect(self.address) # establish connection with the server
-            return pickle.loads(self.skt.recv(2048)) # gets the player object from server
+            return pickle.loads(self.skt.recv(4096)) # gets the player object from server
         except:
             pass
 
     def send(self, data):
         try:
             self.skt.send(pickle.dumps(data))
-            return pickle.loads(self.skt.recv(2048))
+            return pickle.loads(self.skt.recv(4096))
         except socket.error as e:
             print(e)
+            if e.winerror == 10054:
+                quit('Disconnected by server.')

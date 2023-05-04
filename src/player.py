@@ -33,6 +33,7 @@ class Player():
         # edit
         if event.key == pygame.K_SPACE:
             if self.getPos() not in self.blocks: 
+                print((self.x,self.y))
                 self.blocks.append(pygame.Vector2(self.x, self.y))
         if event.key == pygame.K_c:
             self.blocks.clear()

@@ -3,81 +3,96 @@ import pickle
 from _thread import *
 
 from player import Player
+from newPlayer import NewPlayer
+import pygame
 
-# consts
-DISPLAY_WIDTH = 1280
-DISPLAY_HEIGHT = 720
-BLOCK_SIZE = 20
-MOVE_DISTANCE = 20
-
-SERVER_IP = "26.52.183.15"
+SERVER_IP = '26.52.183.15'
 PORT = 6942
-MAX_CLIENTS = 3
+BUFFER_SIZE = 16384
 
-player1 = Player(DISPLAY_WIDTH / 2 + (BLOCK_SIZE * 1), DISPLAY_HEIGHT / 2, BLOCK_SIZE, "red")
-player2 = Player(DISPLAY_WIDTH / 2 + (BLOCK_SIZE * 2), DISPLAY_HEIGHT / 2, BLOCK_SIZE, "blue")
-player3 = Player(DISPLAY_WIDTH / 2 + (BLOCK_SIZE * 3), DISPLAY_HEIGHT / 2, BLOCK_SIZE, "purple")
+BLOCK_SIZE = 20
+players = [NewPlayer(BLOCK_SIZE, 'red'), NewPlayer(BLOCK_SIZE, 'blue'), NewPlayer(BLOCK_SIZE, 'purple'), NewPlayer(BLOCK_SIZE, 'orange')]
+MAX_CLIENTS = len(players)
 
-players = [player1, player2, player3]
+skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-def main():
-    skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    skt.bind((SERVER_IP, PORT))
+except socket.error as e:
+    print(e)
+    if e.winerror == 10048:
+        quit('There is already a server running at {}:{}.'.format(SERVER_IP,PORT))
 
-    try:
-        skt.bind((SERVER_IP, PORT))
-    except socket.error as e:
-        print(str(e))
+skt.listen(MAX_CLIENTS)
 
-    skt.listen(MAX_CLIENTS)
-    print("Server up and running, hosted at {ip}:{port} and expecting up to {clients} clients."
-          .format(ip=SERVER_IP, port=PORT,clients=MAX_CLIENTS))
-    
-    current_player_number = 0
+print('Server up and running, hosted at {ip}:{port} and expecting up to {clients} clients.'.format(ip=SERVER_IP, port=PORT,clients=MAX_CLIENTS))
 
-    while True:
-        client_skt, client_addr = skt.accept()
-        print("Connected to: ", client_addr)
+def threaded_client(skt, player_index):
 
-        start_new_thread(threaded_client, (client_skt, current_player_number))
-        current_player_number += 1
+    if player_index >= MAX_CLIENTS:
+        print('Error: Invalid player index: {}'.format(player_index))
+        return
 
-def threaded_client(skt, player):
-
-    # player = Player(DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2, BLOCK_SIZE, colors[player])
-
-    skt.send(pickle.dumps(players[player])) # sends the newly created player object to the client
-
-    reply = []
-
-    print("Player {} connected.".format(player))
+    skt.send(pickle.dumps(players[player_index])) # sends the newly created object to the client
+    reply = ''
+    exit_reason = 'Unknown'
+    exit_code = -1
+    global players_online
+    players_online.append(player_index)
+    print('Player {} connected.'.format(player_index))
+    print('Players online: {}'.format(players_online))
 
     while True:
         try:
-            data = pickle.loads(skt.recv(2048)) # receives the player object sent by the client
+            bytes = skt.recv(BUFFER_SIZE)
 
-            if player < MAX_CLIENTS:
-                players[player] = data # updates the current player
-            else:
-                print("Error: Invalid player index: {}".format(player))
-                break
+            print('DEBUG: ' + str(len(bytes)) + ' bytes')
 
+            if len(bytes) >= BUFFER_SIZE:
+                exit_reason = 'Client exploded the buffer size: ' + str(len(bytes)) + " >= " + str(BUFFER_SIZE)
+                exit_code = 1
+            data = pickle.loads(bytes) # receives the player object sent by the client
+            players[player_index] = data # updates the current player
             if not data:
-                print("Player {} disconnected.".format(player))
+                print('Player {} disconnected.'.format(player_index))
                 break
             else:
-                if player == 0:
-                    reply = [players[1], players[2]]
-                elif player == 1:
-                    reply = [players[0], players[2]]
-                elif player == 2:
-                    reply = [players[0], players[1]]
-                else:
-                    print("Error: Invalid player index: {}".format(player))
-            skt.sendall(pickle.dumps(reply)) # sends other players objects to the client
-        except:
-            break
+                reply = [players[x] for x in range(MAX_CLIENTS) if (x is not player_index) and (x in players_online)]
 
-    print("Lost connection with player {}.".format(player))
+            skt.sendall(pickle.dumps(reply)) # sends other players objects to the client
+        except socket.error as e:
+            print(e)
+            break
+        except pickle.UnpicklingError as e:
+            print('ERROR: ' + str(e))
+            exit_code = 1
+            break
+        except EOFError as e:
+            exit_reason = 'Client disconnected.'
+            exit_code = 0
+            break
+    
+    players_online.remove(player_index)
+
+    print('Connection with player {} has ended.'.format(player_index))
+    print('Reason: {} (Exit Code {})'.format(exit_reason, exit_code))
+    print('Players online: {}'.format(players_online))
+
+    if exit_code == 1:
+        print('Proceeding to destroy player {} block cache...'.format(player_index))
+        count = len(players[player_index].blocks)
+        players[player_index].blocks.clear()
+        print('Destroyed {} blocks from player {}.'.format(count, player_index))
+
     skt.close()
 
-main()
+global players_online
+players_online = []
+
+while True:
+    client_skt, client_addr = skt.accept()
+    print('Connected to: ', client_addr)
+
+    index = next(x for x in range(MAX_CLIENTS) if x not in players_online)
+
+    start_new_thread(threaded_client, (client_skt, index))
