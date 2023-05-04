@@ -26,6 +26,63 @@ class Block():
 
         return self.x == other.x and self.y == other.y and self.size == other.size
 
+    def __str__(self):
+        return '({x},{y}): {type}'.format(x=self.x, y=self.y, type=self.type.name)
+
+    def move(self, blocks, display_width, display_height):
+        if self.type == BlockType.ARROWRIGHT:
+            if self.check_right(blocks, display_width):
+                self.moveright()
+        elif self.type == BlockType.ARROWDOWN:
+            if self.check_down(blocks, display_height):
+                self.movedown()
+        elif self.type == BlockType.ARROWLEFT:
+            if self.check_left(blocks, 0):
+                self.moveleft()
+        elif self.type == BlockType.ARROWUP:
+            if self.check_up(blocks, 0):
+                self.moveup()
+
+    def check_right(self, blocks, boundary):
+        intent = self.x + self.size
+
+        collision = [other for other in blocks if intent == other.x and self.y == other.y]
+
+        return intent < boundary and not collision
+    
+    def check_up(self, blocks, boundary):
+        intent = self.y - self.size
+
+        collision = [other for other in blocks if self.x == other.x and intent == other.y]
+
+        return intent >= boundary and not collision
+    
+    def check_down(self, blocks, boundary):
+        intent = self.y + self.size
+
+        collision = [other for other in blocks if self.x == other.x and intent == other.y]
+
+        return intent < boundary and not collision
+    
+    def check_left(self, blocks, boundary):
+        intent = self.x - self.size
+
+        collision = [other for other in blocks if intent == other.x and self.y == other.y]
+        
+        return intent >= boundary and not collision
+
+    def moveright(self):
+        self.x += self.size
+
+    def moveup(self):
+        self.y -= self.size
+
+    def movedown(self):
+        self.y += self.size
+
+    def moveleft(self):
+        self.x -= self.size
+
     def draw(self, display):
         if self.type == BlockType.SOLID:
             pygame.draw.rect(display, self.color, pygame.Rect(self.x, self.y, self.size, self.size), 0)

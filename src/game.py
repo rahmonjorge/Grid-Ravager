@@ -13,28 +13,34 @@ pygame.display.set_caption('Grid Ravager')
 DISPLAY = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 CLOCK = pygame.time.Clock()
 dt = 0
+speed = 0.5
 
 def main():
-
+    caption = 'Grid Ravager'
     running = True
     net = Network() # creates a new network object
     player = net.get_player() # gets the player from the server
 
+    # set gamemode
     if player is None:
         gamemode = 'single'
         player = Player(BLOCK_SIZE, 'red')
     else:
         gamemode = 'multi'
-        pygame.display.set_caption('Grid Ravager: {}'.format(player.color))
+        caption += ': ' + str(player.color)
 
     print('Running in {}player mode'.format(gamemode))
 
+
+    second = 0
     while running:
+
         if gamemode == 'multi':
             other_players = net.send(player)
         else:
             other_players = None
 
+        # poll for events
         for event in pygame.event.get():
             # exit
             if event.type == pygame.QUIT:
@@ -44,12 +50,28 @@ def main():
                     running = False
             player.controls(event)
 
+        # draw everything
         draw_everything(player, other_players)
 
-        # limits FPS to 60
-        # dt is delta time in seconds since last frame, used for framerate-
-        # independent physics.
-        dt = CLOCK.tick(60) / 1000
+        # update clocks
+        dt = CLOCK.tick(60) / 1000 # limits FPS to 60
+        second += dt
+        if second >= speed:
+            player.moving = True
+            second = 0
+        else:
+            player.moving = False
+        
+        # update window caption
+        if gamemode == 'single':
+            if player.running:
+                caption = 'running'
+            else:
+                caption = 'paused'
+        pygame.display.set_caption(caption)
+
+        # update player
+        player.update(DISPLAY_WIDTH, DISPLAY_HEIGHT)
 
     pygame.quit()
 

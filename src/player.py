@@ -9,6 +9,8 @@ class Player():
         self.block_selected = None
         self.blocks = []
         self.mousepos = None
+        self.moving = False
+        self.running = False
 
     def draw_blocks(self, display):
         for block in self.blocks:
@@ -27,11 +29,9 @@ class Player():
         pygame.draw.rect(display, color, cursor, 2)
 
     def controls(self, event):
-        
         self.mousepos = self.get_mouse_pos()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-
             # select block
             self.selection = self.mousepos
 
@@ -55,15 +55,7 @@ class Player():
                         self.blocks[index].type = BlockType.HOLLOW
                     else:
                         self.blocks[index].type = BlockType.SOLID
-
-                # move block
-                ''' if self.mousepos in self.blocks:
-                    self.block_selected = pygame.Vector2(self.mousepos.x, self.mousepos.y)
-                elif self.block_selected in self.blocks:
-                    self.blocks.remove(self.block_selected)
-                    self.blocks.append(self.mousepos)
-                    print('appending mouse pos: {}'.format(self.mousepos)) '''
-
+                
             # remove block
             if event.button == 3:
                 self.selection = None
@@ -81,8 +73,28 @@ class Player():
             # clear blocks  
             if event.key == pygame.K_c:
                 self.blocks.clear()
-            if event.ket == pygame.K_r:
-                pass
+            # run 
+            if event.key == pygame.K_r:
+                self.running = not self.running
+
+    def update(self, display_width, display_height):
+        # move blocks
+        if self.running and self.moving:
+            for block in self.blocks:
+                other_blocks = [other for other in self.blocks if other is not block]
+                block.move(other_blocks, display_width, display_height)
+                '''if block.type == BlockType.ARROWRIGHT:
+                    if block.check_right(other_blocks, display_width):
+                        block.moveright()
+                elif block.type == BlockType.ARROWDOWN:
+                    if block.check_down(other_blocks, display_height):
+                        block.movedown()
+                elif block.type == BlockType.ARROWLEFT:
+                    if block.check_left(other_blocks, 0):
+                        block.moveleft()
+                elif block.type == BlockType.ARROWUP:
+                    if block.check_up(other_blocks, 0):
+                        block.moveup()'''
 
     def get_mouse_pos(self):
         return pygame.Vector2([(x // self.size) * self.size for x in pygame.mouse.get_pos()])
