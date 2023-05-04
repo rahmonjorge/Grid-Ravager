@@ -1,6 +1,6 @@
 import pygame
 from network import Network
-from newPlayer import NewPlayer
+from player import Player
 
 # consts
 DISPLAY_WIDTH = 500
@@ -22,7 +22,7 @@ def main():
 
     if player is None:
         gamemode = 'single'
-        player = NewPlayer(BLOCK_SIZE, 'red')
+        player = Player(BLOCK_SIZE, 'red')
     else:
         gamemode = 'multi'
         pygame.display.set_caption('Grid Ravager: {}'.format(player.color))
@@ -36,6 +36,7 @@ def main():
             other_players = None
 
         for event in pygame.event.get():
+            # exit
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
@@ -62,11 +63,11 @@ def draw_everything(player, other_players = None):
     if other_players is not None:
         for other in other_players:
             other.draw_blocks(DISPLAY)
-            other.draw_selection(DISPLAY, other.color)
+            # other.draw_selection(DISPLAY, other.color)
             other.draw_cursor(DISPLAY, other.color)
     if player is not None:
         player.draw_blocks(DISPLAY)
-        player.draw_selection(DISPLAY, 'green')
+        # player.draw_selection(DISPLAY, 'green')
         player.draw_cursor(DISPLAY, 'green')
 
     # draw cursor

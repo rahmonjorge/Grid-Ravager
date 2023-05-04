@@ -3,7 +3,6 @@ import pickle
 from _thread import *
 
 from player import Player
-from newPlayer import NewPlayer
 import pygame
 
 SERVER_IP = '26.52.183.15'
@@ -11,7 +10,7 @@ PORT = 6942
 BUFFER_SIZE = 16384
 
 BLOCK_SIZE = 20
-players = [NewPlayer(BLOCK_SIZE, 'red'), NewPlayer(BLOCK_SIZE, 'blue'), NewPlayer(BLOCK_SIZE, 'purple'), NewPlayer(BLOCK_SIZE, 'orange')]
+players = [Player(BLOCK_SIZE, 'red'), Player(BLOCK_SIZE, 'blue'), Player(BLOCK_SIZE, 'purple'), Player(BLOCK_SIZE, 'orange')]
 MAX_CLIENTS = len(players)
 
 skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
