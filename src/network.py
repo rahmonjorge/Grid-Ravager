@@ -1,6 +1,8 @@
 import socket
 import pickle
 
+BUFFER_SIZE = 16384
+
 # class used by the client to connect to the server
 class Network:
     def __init__(self):
@@ -16,14 +18,14 @@ class Network:
     def connect(self):
         try:
             self.skt.connect(self.address) # establish connection with the server
-            return pickle.loads(self.skt.recv(4096)) # gets the player object from server
+            return pickle.loads(self.skt.recv(BUFFER_SIZE)) # gets the player object from server
         except:
             pass
 
     def send(self, data):
         try:
             self.skt.send(pickle.dumps(data))
-            return pickle.loads(self.skt.recv(4096))
+            return pickle.loads(self.skt.recv(BUFFER_SIZE))
         except socket.error as e:
             print(e)
             if e.winerror == 10054:

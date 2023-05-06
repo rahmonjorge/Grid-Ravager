@@ -45,7 +45,8 @@ def threaded_client(skt, player_index):
         try:
             bytes = skt.recv(BUFFER_SIZE)
 
-            print('DEBUG: ' + str(len(bytes)) + ' bytes')
+            # DEBUG
+            #print('DEBUG: ' + str(len(bytes)) + ' bytes')
 
             if len(bytes) >= BUFFER_SIZE:
                 exit_reason = 'Client exploded the buffer size: ' + str(len(bytes)) + " >= " + str(BUFFER_SIZE)

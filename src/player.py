@@ -3,11 +3,19 @@ from block import Block, BlockType
 
 class Player():
     def __init__(self, size, color):
+
+        # attributes
         self.size = size
         self.color = color
+        self.blocks = []
+
+        # assets
+        self.sound1 = None
+        self.sound2 = None
+
+        # states
         self.selection = None
         self.block_selected = None
-        self.blocks = []
         self.mousepos = None
         self.moving = False
         self.running = False
@@ -29,9 +37,10 @@ class Player():
         pygame.draw.rect(display, color, cursor, 2)
 
     def controls(self, event):
-        self.mousepos = self.get_mouse_pos()
+        
 
         if event.type == pygame.MOUSEBUTTONDOWN:
+
             # select block
             self.selection = self.mousepos
 
@@ -58,17 +67,21 @@ class Player():
                 
             # remove block
             if event.button == 3:
-                self.selection = None
-                newblock = Block(self.mousepos.x, self.mousepos.y, self.size, self.color, BlockType.SOLID)
-                if newblock in self.blocks:
-                    self.blocks.remove(newblock)
+                pygame.mixer.Sound.play(pygame.mixer.Sound(self.sound1))
 
-            # debug 
-            # print('block selected: {}'.format(self.block_selected))
-            # print('blocks: {}'.format(self.blocks))
-            # print('selection: {}'.format(self.selection))
-            print('blocks count: ' + str(len(self.blocks)))
+                self.selection = None
+
+                check = Block(self.mousepos.x, self.mousepos.y, self.size, self.color)
+                if check in self.blocks:
+                    self.blocks.remove(check)
+                
+
+            
         
+        if event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 3:
+                pygame.mixer.Sound.play(pygame.mixer.Sound(self.sound2))
+
         if event.type == pygame.KEYDOWN:
             # clear blocks  
             if event.key == pygame.K_c:
@@ -78,23 +91,19 @@ class Player():
                 self.running = not self.running
 
     def update(self, display_width, display_height):
+        self.mousepos = self.get_mouse_pos()
+
         # move blocks
         if self.running and self.moving:
             for block in self.blocks:
                 other_blocks = [other for other in self.blocks if other is not block]
                 block.move(other_blocks, display_width, display_height)
-                '''if block.type == BlockType.ARROWRIGHT:
-                    if block.check_right(other_blocks, display_width):
-                        block.moveright()
-                elif block.type == BlockType.ARROWDOWN:
-                    if block.check_down(other_blocks, display_height):
-                        block.movedown()
-                elif block.type == BlockType.ARROWLEFT:
-                    if block.check_left(other_blocks, 0):
-                        block.moveleft()
-                elif block.type == BlockType.ARROWUP:
-                    if block.check_up(other_blocks, 0):
-                        block.moveup()'''
+
+        # debug 
+        # print('block selected: {}'.format(self.block_selected))
+        # print('blocks: {}'.format(self.blocks))
+        # print('selection: {}'.format(self.selection))
+        
 
     def get_mouse_pos(self):
-        return pygame.Vector2([(x // self.size) * self.size for x in pygame.mouse.get_pos()])
+        return pygame.Vector2([(p // self.size) * self.size for p in pygame.mouse.get_pos()])

@@ -4,14 +4,14 @@ from enum import IntEnum
 
 class BlockType(IntEnum):
     SOLID = 0
-    HOLLOW = 4
-    ARROWUP = 5
-    ARROWDOWN = 6
-    ARROWLEFT = 7
-    ARROWRIGHT = 8
+    HOLLOW = 1
+    ARROWUP = 2
+    ARROWDOWN = 3
+    ARROWLEFT = 4
+    ARROWRIGHT = 5
 
 class Block():
-    def __init__(self, x, y, size, color, type):
+    def __init__(self, x, y, size, color = 'pink', type = BlockType.SOLID):
         self.x = x
         self.y = y
         self.size = size
